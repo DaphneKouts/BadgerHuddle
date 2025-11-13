@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "813796076500",
+    "project_id": "badgerhuddle",
+    "storage_bucket": "badgerhuddle.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:813796076500:android:aafe4e7eedcf21189ec441",
+        "android_client_info": {
+          "package_name": "com.cs407.badgerhuddle"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXDryo4nkAn-b5AhbJv7xjYzWuvChpWS4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
