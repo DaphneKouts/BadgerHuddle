@@ -16,18 +16,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.Group
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cs407.badgerhuddle.screens.*
 import com.cs407.badgerhuddle.ui.theme.BadgerHuddleTheme
 import com.cs407.badgerhuddle.ui.theme.RedUW
+import com.cs407.badgerhuddle.ui.viewModels.ViewModelAccount
+import com.google.firebase.Firebase
+import com.google.firebase.initialize
 
 class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        Firebase.initialize(this)
+
         setContent {
             BadgerHuddleTheme {
                 var currentScreen by remember { mutableStateOf("home") }
+
+                val accountViewModel: ViewModelAccount = viewModel()
 
                 Scaffold(
                     topBar = {
@@ -51,7 +60,7 @@ class MainActivity : ComponentActivity() {
                         "home" -> HomeScreen({ currentScreen = it }, Modifier.padding(innerPadding))
                         "games" -> GamesScreen({ currentScreen = it }, Modifier.padding(innerPadding))
                         "create" -> CreateGameScreen({ currentScreen = it }, Modifier.padding(innerPadding))
-                        "profile" -> ProfileScreen({ currentScreen = it }, Modifier.padding(innerPadding))
+                        "profile" -> ProfileScreen({ currentScreen = it }, Modifier.padding(innerPadding), viewModel = accountViewModel)
                         "friends" -> FriendsScreen({ currentScreen = it }, Modifier.padding(innerPadding))
                         "courts" -> CourtsScreen({ currentScreen = it }, Modifier.padding(innerPadding))
                         "share" -> ShareProfileScreen({ currentScreen = it }, Modifier.padding(innerPadding))

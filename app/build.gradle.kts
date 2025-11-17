@@ -29,11 +29,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
-    kotlinOptions {
-        jvmTarget = "11"
+    kotlin {
+        jvmToolchain(21)
     }
 
     buildFeatures {
@@ -73,6 +73,7 @@ dependencies {
     //Navigation
     implementation("androidx.navigation:navigation-compose:2.8.3")
     implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
 
     //Tests
     testImplementation(libs.junit)
@@ -86,4 +87,5 @@ dependencies {
 
     implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
     implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-auth")
 }

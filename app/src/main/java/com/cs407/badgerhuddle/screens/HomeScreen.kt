@@ -26,7 +26,9 @@ fun HomeScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
 
         if (mockFriends.any { it.isActive }) {
             item {
-                Card {
+                Card(
+                    Modifier.fillMaxWidth()
+                ) {
                     Column(Modifier.padding(16.dp)) {
                         Text("Friends Playing Now", color = RedUW)
                         mockFriends.filter { it.isActive }.forEach {
@@ -40,7 +42,9 @@ fun HomeScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
         item {
             Text("Nearby Courts", style = MaterialTheme.typography.titleMedium)
             mockCourts.forEach {
-                Card(onClick = { onNavigate("courts") }, modifier = Modifier.padding(vertical = 4.dp)) {
+                Card(onClick = { onNavigate("courts") }, modifier = Modifier
+                    .padding(vertical = 4.dp)
+                    .fillMaxWidth()) {
                     Column(Modifier.padding(12.dp)) {
                         Text(it.name)
                         Text("${it.currentPlayers}/${it.capacity} players • ${it.distance}")
@@ -52,7 +56,9 @@ fun HomeScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
         item {
             Text("Upcoming Games", style = MaterialTheme.typography.titleMedium)
             mockGames.forEach {
-                Card(onClick = { onNavigate("games") }, modifier = Modifier.padding(vertical = 4.dp)) {
+                Card(onClick = { onNavigate("games") }, modifier = Modifier
+                    .padding(vertical = 4.dp)
+                    .fillMaxWidth()) {
                     Column(Modifier.padding(12.dp)) {
                         Text(it.sport)
                         Text("${it.date}  •  ${it.time}")
