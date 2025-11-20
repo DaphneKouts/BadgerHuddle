@@ -13,11 +13,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.Group
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.cs407.badgerhuddle.screens.*
+import com.cs407.badgerhuddle.ui.screens.CourtsScreen
+import com.cs407.badgerhuddle.ui.screens.CreateGameScreen
+import com.cs407.badgerhuddle.ui.screens.FriendsScreen
+import com.cs407.badgerhuddle.ui.screens.GamesScreen
+import com.cs407.badgerhuddle.ui.screens.HomeScreen
+import com.cs407.badgerhuddle.ui.screens.ProfileScreen
+import com.cs407.badgerhuddle.ui.screens.ShareProfileScreen
 import com.cs407.badgerhuddle.ui.theme.BadgerHuddleTheme
 import com.cs407.badgerhuddle.ui.theme.RedUW
 import com.cs407.badgerhuddle.ui.viewModels.ViewModelAccount
@@ -58,12 +62,31 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     when (currentScreen) {
                         "home" -> HomeScreen({ currentScreen = it }, Modifier.padding(innerPadding))
-                        "games" -> GamesScreen({ currentScreen = it }, Modifier.padding(innerPadding))
-                        "create" -> CreateGameScreen({ currentScreen = it }, Modifier.padding(innerPadding))
-                        "profile" -> ProfileScreen({ currentScreen = it }, Modifier.padding(innerPadding), viewModel = accountViewModel)
-                        "friends" -> FriendsScreen({ currentScreen = it }, Modifier.padding(innerPadding))
-                        "courts" -> CourtsScreen({ currentScreen = it }, Modifier.padding(innerPadding))
-                        "share" -> ShareProfileScreen({ currentScreen = it }, Modifier.padding(innerPadding))
+                        "games" -> GamesScreen(
+                            { currentScreen = it },
+                            Modifier.padding(innerPadding)
+                        )
+                        "create" -> CreateGameScreen(
+                            { currentScreen = it },
+                            Modifier.padding(innerPadding)
+                        )
+                        "profile" -> ProfileScreen(
+                            { currentScreen = it },
+                            Modifier.padding(innerPadding),
+                            viewModel = accountViewModel
+                        )
+                        "friends" -> FriendsScreen(
+                            { currentScreen = it },
+                            Modifier.padding(innerPadding)
+                        )
+                        "courts" -> CourtsScreen(
+                            { currentScreen = it },
+                            Modifier.padding(innerPadding)
+                        )
+                        "share" -> ShareProfileScreen(
+                            { currentScreen = it },
+                            Modifier.padding(innerPadding)
+                        )
                     }
                 }
             }

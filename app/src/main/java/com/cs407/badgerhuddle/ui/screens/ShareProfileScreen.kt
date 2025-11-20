@@ -1,12 +1,9 @@
-package com.cs407.badgerhuddle.screens
+package com.cs407.badgerhuddle.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -36,15 +33,7 @@ fun ShareProfileScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifi
         Text("Share Profile", style = MaterialTheme.typography.titleLarge)
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(16.dp)) {
-                Text("Scan this mock QR code to connect with players.")
-                Spacer(Modifier.height(16.dp))
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(150.dp)
-                        .padding(8.dp),
-                    contentAlignment = androidx.compose.ui.Alignment.Center
-                ) { Text("[ QR CODE ]") }
+                Text("Hold phone close to another on the BadgerHuddle app to share profile via bluetooth!")
             }
         }
         Button(

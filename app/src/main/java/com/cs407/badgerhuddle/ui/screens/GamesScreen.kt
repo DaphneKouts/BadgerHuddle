@@ -1,4 +1,4 @@
-package com.cs407.badgerhuddle.screens
+package com.cs407.badgerhuddle.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
