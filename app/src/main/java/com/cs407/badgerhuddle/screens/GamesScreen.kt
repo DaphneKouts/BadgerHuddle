@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.cs407.badgerhuddle.ui.theme.RedUW
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 data class CourtGame(
@@ -25,9 +26,10 @@ data class CourtGame(
 fun GamesScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
     var rsvped by remember { mutableStateOf(setOf<String>()) }
     var games by remember { mutableStateOf(listOf<CourtGame>()) }
+    val scope = rememberCoroutineScope()
+    val db = FirebaseFirestore.getInstance()
 
     LaunchedEffect(Unit) {
-        val db = FirebaseFirestore.getInstance()
         val snapshot = db.collection("Courts").get().await()
         games = snapshot.documents.mapNotNull { doc ->
             val data = doc.data ?: return@mapNotNull null
@@ -51,10 +53,12 @@ fun GamesScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
     ) {
         items(games) { game ->
             val joined = rsvped.contains(game.id)
+
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
                     Text("${game.sport} at ${game.courtName}", color = RedUW)
                     Text("${game.date} • ${game.time}")
+
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier
@@ -62,15 +66,42 @@ fun GamesScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
                             .padding(top = 8.dp)
                     ) {
                         Text("${game.currentPlayers}/${game.maxPlayers} players")
+
                         Button(
                             onClick = {
-                                rsvped = if (joined) rsvped - game.id else rsvped + game.id
+                                scope.launch {
+
+                                    val gameRef = db.collection("Courts").document(game.id)
+                                    val snapshot = gameRef.get().await()
+                                    val current = (snapshot.getLong("NumCheckedIn") ?: 0L).toInt()
+                                    val max = (snapshot.getLong("MaxCheckIn") ?: 0L).toInt()
+
+                                    if (!joined) {
+                                        if (current >= max) return@launch
+                                        gameRef.update("NumCheckedIn", current + 1).await()
+                                        rsvped = rsvped + game.id
+                                        games = games.map {
+                                            if (it.id == game.id) it.copy(currentPlayers = current + 1) else it
+                                        }
+                                    } else {
+                                        val newValue = (current - 1).coerceAtLeast(0)
+                                        gameRef.update("NumCheckedIn", newValue).await()
+                                        rsvped = rsvped - game.id
+                                        games = games.map {
+                                            if (it.id == game.id) it.copy(currentPlayers = newValue) else it
+                                        }
+                                    }
+                                }
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (joined) MaterialTheme.colorScheme.secondary else RedUW
-                            )
+                                containerColor = if (joined) MaterialTheme.colorScheme.primary else RedUW
+                            ),
+                            modifier = Modifier.height(40.dp)
                         ) {
-                            Text(if (joined) "Cancel RSVP" else "RSVP")
+                            Text(
+                                text = if (joined) "RSVP’d" else "RSVP",
+                                color = if (joined) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary
+                            )
                         }
                     }
                 }
