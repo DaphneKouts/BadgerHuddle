@@ -29,11 +29,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlin {
-        jvmToolchain(21)
+        jvmToolchain(17)
     }
 
     buildFeatures {
@@ -54,38 +54,29 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
 
-    //Jetpack Compose
     implementation("androidx.compose.ui:ui:1.7.4")
     implementation("androidx.compose.ui:ui-graphics:1.7.4")
     implementation("androidx.compose.ui:ui-tooling-preview:1.7.4")
 
-    //Material3
     implementation("androidx.compose.material3:material3:1.3.0-beta04")
-
     implementation("androidx.compose.material3:material3-window-size-class:1.3.1")
-
-    //Extended Material Icons
     implementation("androidx.compose.material:material-icons-extended:1.7.4")
 
-    //Lifecycle helpers
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
-
-    //Navigation
     implementation("androidx.navigation:navigation-compose:2.8.3")
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
 
-    //Tests
+    implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-analytics")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.7.4")
 
-    //Debugging
     debugImplementation("androidx.compose.ui:ui-tooling:1.7.4")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.7.4")
-
-    implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
-    implementation("com.google.firebase:firebase-analytics")
-    implementation("com.google.firebase:firebase-auth")
 }
