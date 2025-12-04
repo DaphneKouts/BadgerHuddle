@@ -105,7 +105,7 @@ class ViewModelAccount : ViewModel() {
                         "id" to uid,
                         "name" to "",
                         "bio" to "",
-                        "friends" to listOf("")
+                        "friends" to emptyList<String>()
                     )
 
                     db.collection("Profiles").document(uid).set(profile)

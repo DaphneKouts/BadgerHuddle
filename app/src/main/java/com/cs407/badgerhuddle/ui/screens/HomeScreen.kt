@@ -1,5 +1,3 @@
-package com.cs407.badgerhuddle.ui.screens
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -7,7 +5,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.cs407.badgerhuddle.ui.theme.RedUW
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 data class HomeGame(
     val sport: String = "",
@@ -22,8 +23,15 @@ data class HomeGame(
 fun HomeScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
 
     val db = FirebaseFirestore.getInstance()
-    var games by remember { mutableStateOf(listOf<HomeGame>()) }
+    val auth = FirebaseAuth.getInstance()
+    val uid = auth.currentUser?.uid
 
+    var games by remember { mutableStateOf(listOf<HomeGame>()) }
+    var friends by remember { mutableStateOf(listOf<String>()) }
+
+    val scope = rememberCoroutineScope()
+
+    // Load games
     LaunchedEffect(Unit) {
         db.collection("Courts").addSnapshotListener { snapshot, _ ->
             if (snapshot != null) {
@@ -42,6 +50,20 @@ fun HomeScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
         }
     }
 
+    // Load friends
+    LaunchedEffect(uid) {
+        if (uid != null) {
+            scope.launch {
+                try {
+                    val doc = db.collection("Profiles").document(uid).get().await()
+                    friends = doc.get("friends") as? List<String> ?: emptyList()
+                } catch (e: Exception) {
+                    println("Error fetching friends: ${e.message}")
+                }
+            }
+        }
+    }
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -50,21 +72,38 @@ fun HomeScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
     ) {
 
         item {
-            Text("Welcome Back!", color = RedUW, style = MaterialTheme.typography.headlineSmall)
+            Text(
+                "Welcome Back!",
+                color = RedUW,
+                style = MaterialTheme.typography.headlineSmall
+            )
             Text("Find your next game or check in nearby")
         }
+
+        // Friends section
         item {
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("Friends Playing Now", color = RedUW)
-                    Text(
-                        "Add friends to see where they're playing",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    Text("Recently Added Friends", color = RedUW, style = MaterialTheme.typography.titleMedium)
+
+                    if (friends.isEmpty()) {
+                        Text(
+                            "Add friends and they will pop up here",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    } else {
+                        friends.forEach { friend ->
+                            Text(
+                                friend,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
                 }
             }
         }
 
+        // Upcoming games section
         item {
             Text("Upcoming Games", style = MaterialTheme.typography.titleMedium)
             games.forEach { game ->

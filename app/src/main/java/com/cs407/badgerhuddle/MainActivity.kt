@@ -1,5 +1,7 @@
 package com.cs407.badgerhuddle
 
+import FriendsScreen
+import HomeScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,9 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cs407.badgerhuddle.ui.screens.CourtsScreen
 import com.cs407.badgerhuddle.ui.screens.CreateGameScreen
-import com.cs407.badgerhuddle.ui.screens.FriendsScreen
 import com.cs407.badgerhuddle.ui.screens.GamesScreen
-import com.cs407.badgerhuddle.ui.screens.HomeScreen
 import com.cs407.badgerhuddle.ui.screens.ProfileScreen
 import com.cs407.badgerhuddle.ui.screens.ShareProfileScreen
 import com.cs407.badgerhuddle.ui.theme.BadgerHuddleTheme
