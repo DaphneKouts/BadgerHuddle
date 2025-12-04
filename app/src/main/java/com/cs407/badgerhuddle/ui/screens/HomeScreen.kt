@@ -1,8 +1,11 @@
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.cs407.badgerhuddle.ui.theme.RedUW
 import com.google.firebase.auth.FirebaseAuth
@@ -30,6 +33,7 @@ fun HomeScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
     var friends by remember { mutableStateOf(listOf<String>()) }
 
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     // Load games
     LaunchedEffect(Unit) {
@@ -98,6 +102,29 @@ fun HomeScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
+                    }
+                }
+            }
+        }
+
+        // Live Status section
+        item {
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Live Status",
+                        color = RedUW,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Button(
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW)
+                            intent.data = Uri.parse("https://www.connect2mycloud.com/Widgets/Data/locationCount?type=bar&key=7938fc89-a15c-492d-9566-12c961bc1f27")
+                            context.startActivity(intent)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("View Live Count")
                     }
                 }
             }
