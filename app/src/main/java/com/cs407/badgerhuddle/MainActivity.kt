@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.cs407.badgerhuddle.ui.screens.CourtsScreen
 import com.cs407.badgerhuddle.ui.screens.CreateGameScreen
 import com.cs407.badgerhuddle.ui.screens.GamesScreen
 import com.cs407.badgerhuddle.ui.screens.ProfileScreen
@@ -79,10 +78,6 @@ class MainActivity : ComponentActivity() {
                             { currentScreen = it },
                             Modifier.padding(innerPadding)
                         )
-                        "courts" -> CourtsScreen(
-                            { currentScreen = it },
-                            Modifier.padding(innerPadding)
-                        )
                         "share" -> ShareProfileScreen(
                             { currentScreen = it },
                             Modifier.padding(innerPadding)
@@ -98,7 +93,6 @@ class MainActivity : ComponentActivity() {
 fun CustomBottomNav(currentScreen: String, onNavigate: (String) -> Unit) {
     val items: List<Triple<String, androidx.compose.ui.graphics.vector.ImageVector, String>> = listOf(
         Triple("home", Icons.Filled.Home, "Home"),
-        Triple("courts", Icons.Filled.Map, "Courts"),
         Triple("games", Icons.Filled.CalendarMonth, "Games"),
         Triple("create", Icons.Filled.Add, "Create"),
         Triple("friends", Icons.Filled.Group, "Friends"),
