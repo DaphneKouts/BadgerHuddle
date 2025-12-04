@@ -9,7 +9,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.cs407.badgerhuddle.ui.theme.RedUW
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
@@ -181,8 +184,9 @@ fun CreateGameScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val db = FirebaseFirestore.getInstance()
+    val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+    val scope = rememberCoroutineScope()
 
-    // Check if all fields are filled out
     val allFieldsFilled = sport.isNotBlank()
             && location.isNotBlank()
             && date.isNotBlank()
@@ -237,56 +241,57 @@ fun CreateGameScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier
 
         Button(
             onClick = {
-                // Double-check, in case button enabling desynced
-                if (!allFieldsFilled) {
-                    errorMessage = "Please fill out all fields correctly."
-                    return@Button
-                }
+                scope.launch {
+                    if (uid.isBlank()) {
+                        errorMessage = "You must be signed in to create a game."
+                        return@launch
+                    }
 
-                val maxValue = maxPeople.toIntOrNull() ?: 10
+                    if (!allFieldsFilled) {
+                        errorMessage = "Please fill out all fields correctly."
+                        return@launch
+                    }
 
-                db.collection("Courts")
-                    .whereEqualTo("Court", location)
-                    .whereEqualTo("Date", date)
-                    .whereEqualTo("Time", time)
-                    .get()
-                    .addOnSuccessListener { query ->
-                        if (!query.isEmpty) {
-                            errorMessage = "A game already exists at $location on $date at $time."
-                            return@addOnSuccessListener
+                    val maxValue = maxPeople.toIntOrNull() ?: 10
+                    val gameId = System.currentTimeMillis().toString()
+
+                    val query = db.collection("Courts")
+                        .whereEqualTo("Court", location)
+                        .whereEqualTo("Date", date)
+                        .whereEqualTo("Time", time)
+                        .get()
+                        .await()
+
+                    if (!query.isEmpty) {
+                        errorMessage = "A game already exists at this court, date, and time."
+                        return@launch
+                    }
+
+                    val data = hashMapOf(
+                        "Sport" to sport,
+                        "Court" to location,
+                        "Date" to date,
+                        "Time" to time,
+                        "NumCheckedIn" to 1,
+                        "MaxCheckIn" to maxValue,
+                        "GameId" to gameId,
+                        "Players" to listOf(uid)
+                    )
+
+                    db.collection("Courts").document(gameId)
+                        .set(data)
+                        .addOnSuccessListener {
+                            onNavigate("games")
                         }
-
-                        val gameId = System.currentTimeMillis().toString()
-
-                        val data = hashMapOf(
-                            "Sport" to sport,
-                            "Court" to location,
-                            "Date" to date,
-                            "Time" to time,
-                            "NumCheckedIn" to 1,
-                            "MaxCheckIn" to maxValue,
-                            "GameId" to gameId
-                        )
-
-                        db.collection("Courts").document(gameId)
-                            .set(data)
-                            .addOnSuccessListener {
-                                onNavigate("games")
-                            }
-                            .addOnFailureListener {
-                                errorMessage = "Failed to create game. Please try again."
-                            }
-                    }
-                    .addOnFailureListener {
-                        errorMessage = "Error checking database."
-                    }
+                        .addOnFailureListener { e ->
+                            errorMessage = "Error creating game: ${e.message}"
+                        }
+                }
             },
             colors = ButtonDefaults.buttonColors(containerColor = RedUW),
-            enabled = allFieldsFilled, // DISABLE WHEN INVALID
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Create Game")
         }
     }
 }
-

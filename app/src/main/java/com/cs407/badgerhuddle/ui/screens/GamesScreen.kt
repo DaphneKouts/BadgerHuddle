@@ -8,6 +8,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.cs407.badgerhuddle.ui.theme.RedUW
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -19,20 +21,24 @@ data class CourtGame(
     val date: String = "",
     val time: String = "",
     val currentPlayers: Int = 0,
-    val maxPlayers: Int = 0
+    val maxPlayers: Int = 0,
+    val players: List<String> = emptyList()
 )
 
 @Composable
 fun GamesScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
-    var rsvped by remember { mutableStateOf(setOf<String>()) }
+    val db = FirebaseFirestore.getInstance()
+    val user = FirebaseAuth.getInstance().currentUser
+    val uid = user?.uid ?: ""
+
     var games by remember { mutableStateOf(listOf<CourtGame>()) }
     val scope = rememberCoroutineScope()
-    val db = FirebaseFirestore.getInstance()
 
     LaunchedEffect(Unit) {
         val snapshot = db.collection("Courts").get().await()
         games = snapshot.documents.mapNotNull { doc ->
             val data = doc.data ?: return@mapNotNull null
+
             CourtGame(
                 id = data["GameId"]?.toString() ?: doc.id,
                 sport = data["Sport"]?.toString() ?: "",
@@ -40,7 +46,8 @@ fun GamesScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
                 date = data["Date"]?.toString() ?: "",
                 time = data["Time"]?.toString() ?: "",
                 currentPlayers = (data["NumCheckedIn"] as? Long)?.toInt() ?: 0,
-                maxPlayers = (data["MaxCheckIn"] as? Long)?.toInt() ?: 0
+                maxPlayers = (data["MaxCheckIn"] as? Long)?.toInt() ?: 0,
+                players = (data["Players"] as? List<String>) ?: emptyList()
             )
         }
     }
@@ -52,10 +59,12 @@ fun GamesScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(games) { game ->
-            val joined = rsvped.contains(game.id)
+
+            val userJoined = game.players.contains(uid)
 
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
+
                     Text("${game.sport} at ${game.courtName}", color = RedUW)
                     Text("${game.date} • ${game.time}")
 
@@ -65,6 +74,7 @@ fun GamesScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
                             .fillMaxWidth()
                             .padding(top = 8.dp)
                     ) {
+
                         Text("${game.currentPlayers}/${game.maxPlayers} players")
 
                         Button(
@@ -72,35 +82,63 @@ fun GamesScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
                                 scope.launch {
 
                                     val gameRef = db.collection("Courts").document(game.id)
-                                    val snapshot = gameRef.get().await()
-                                    val current = (snapshot.getLong("NumCheckedIn") ?: 0L).toInt()
-                                    val max = (snapshot.getLong("MaxCheckIn") ?: 0L).toInt()
 
-                                    if (!joined) {
-                                        if (current >= max) return@launch
-                                        gameRef.update("NumCheckedIn", current + 1).await()
-                                        rsvped = rsvped + game.id
+                                    val snapshot = gameRef.get().await()
+                                    val curr = (snapshot.getLong("NumCheckedIn") ?: 0L).toInt()
+                                    val max = (snapshot.getLong("MaxCheckIn") ?: 0L).toInt()
+                                    val currentPlayersList =
+                                        (snapshot.get("Players") as? List<String>) ?: emptyList()
+
+                                    if (!userJoined) {
+                                        // Can't join if full
+                                        if (curr >= max) return@launch
+
+                                        gameRef.update(
+                                            mapOf(
+                                                "NumCheckedIn" to curr + 1,
+                                                "Players" to FieldValue.arrayUnion(uid)
+                                            )
+                                        ).await()
+
                                         games = games.map {
-                                            if (it.id == game.id) it.copy(currentPlayers = current + 1) else it
+                                            if (it.id == game.id)
+                                                it.copy(
+                                                    currentPlayers = curr + 1,
+                                                    players = currentPlayersList + uid
+                                                )
+                                            else it
                                         }
                                     } else {
-                                        val newValue = (current - 1).coerceAtLeast(0)
-                                        gameRef.update("NumCheckedIn", newValue).await()
-                                        rsvped = rsvped - game.id
+                                        val newValue = (curr - 1).coerceAtLeast(0)
+
+                                        gameRef.update(
+                                            mapOf(
+                                                "NumCheckedIn" to newValue,
+                                                "Players" to FieldValue.arrayRemove(uid)
+                                            )
+                                        ).await()
+
                                         games = games.map {
-                                            if (it.id == game.id) it.copy(currentPlayers = newValue) else it
+                                            if (it.id == game.id)
+                                                it.copy(
+                                                    currentPlayers = newValue,
+                                                    players = currentPlayersList.filter { id -> id != uid }
+                                                )
+                                            else it
                                         }
                                     }
                                 }
                             },
+                            enabled = (!userJoined && game.currentPlayers < game.maxPlayers) || userJoined,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (joined) MaterialTheme.colorScheme.primary else RedUW
+                                containerColor =
+                                    if (userJoined) MaterialTheme.colorScheme.primary else RedUW
                             ),
                             modifier = Modifier.height(40.dp)
                         ) {
                             Text(
-                                text = if (joined) "RSVP’d" else "RSVP",
-                                color = if (joined) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary
+                                text = if (userJoined) "Checked In" else "Check In",
+                                color = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                     }

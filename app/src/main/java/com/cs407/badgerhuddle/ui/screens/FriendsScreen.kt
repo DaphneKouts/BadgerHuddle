@@ -7,31 +7,46 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.cs407.badgerhuddle.data.mockFriends
 import com.cs407.badgerhuddle.ui.theme.RedUW
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 @Composable
 fun FriendsScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
+    val uid = auth.currentUser?.uid
+
+    var friends by remember { mutableStateOf(listOf<String>()) }
+    val scope = rememberCoroutineScope()
+
+    // Fetch friends when the composable is first composed
+    LaunchedEffect(uid) {
+        if (uid != null) {
+            scope.launch {
+                try {
+                    val doc = db.collection("Profiles").document(uid).get().await()
+                    val friendsList = doc.get("friends") as? List<String> ?: emptyList()
+                    friends = friendsList
+                } catch (e: Exception) {
+                    println("Error fetching friends: ${e.message}")
+                }
+            }
+        }
+    }
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(mockFriends) { f ->
+        items(friends) { friendName ->
             Card {
                 Column(Modifier.padding(12.dp)) {
-                    Text(f.name, style = MaterialTheme.typography.titleMedium)
-                    Text(if (f.isActive) "Active at ${f.currentCourt}" else "Offline")
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        Button(
-                            onClick = { onNavigate("courts") },
-                            enabled = f.isActive,
-                            colors = ButtonDefaults.buttonColors(containerColor = RedUW)
-                        ) {
-                            Text("Join")
-                        }
-                    }
+                    Text(friendName, style = MaterialTheme.typography.titleMedium)
                 }
             }
         }

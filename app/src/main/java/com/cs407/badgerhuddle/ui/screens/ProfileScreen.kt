@@ -132,10 +132,12 @@ fun AuthenticationCard(
  * If you are signed in, normal profile screen
  */
 @Composable
-fun ProfileEditor(onNavigate: (String) -> Unit, modifier: Modifier = Modifier, viewModel: ViewModelAccount) {
+fun ProfileEditor(
+    onNavigate: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: ViewModelAccount
+) {
     val uiState by viewModel.uiState.collectAsState()
-    var name by remember { mutableStateOf(uiState.userName.ifBlank {"tap to edit name"}) }
-    var bio by remember { mutableStateOf(uiState.userBio.ifBlank {"tap to edit bio"}) }
 
     Column(
         modifier = modifier
@@ -146,30 +148,37 @@ fun ProfileEditor(onNavigate: (String) -> Unit, modifier: Modifier = Modifier, v
         Text("Profile", style = MaterialTheme.typography.titleLarge)
 
         OutlinedTextField(
-            name,
-            {
-                name = it
-                viewModel.updateName(it)},
+            value = uiState.userName,
+            onValueChange = { viewModel.updateName(it) },
             label = { Text("Name") },
-            modifier = Modifier.fillMaxWidth())
+            placeholder = { Text("tap to edit name") },
+            modifier = Modifier.fillMaxWidth()
+        )
 
         OutlinedTextField(
-            bio,
-            {
-                bio = it
-                viewModel.updateBio(it)},
+            value = uiState.userBio,
+            onValueChange = { viewModel.updateBio(it) },
             label = { Text("Bio") },
-            modifier = Modifier.fillMaxWidth())
+            placeholder = { Text("tap to edit bio") },
+            modifier = Modifier.fillMaxWidth()
+        )
 
         Button(
-            onClick = { onNavigate("share") },
+            onClick = {
+                viewModel.addFakeFriend()
+                onNavigate("share") },
             colors = ButtonDefaults.buttonColors(containerColor = RedUW),
             modifier = Modifier.fillMaxWidth()
-        ) { Text("Share Profile") }
+        ) {
+            Text("Share Profile")
+        }
 
         Button(
             onClick = viewModel::signOut,
-            colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray, contentColor = Color.Black),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.LightGray,
+                contentColor = Color.Black
+            ),
             modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
             Text("Sign Out", style = MaterialTheme.typography.titleMedium)
