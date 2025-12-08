@@ -46,4 +46,3 @@ val mockFriends = listOf(
     Friend("2", "Jordan", false, null, listOf("Soccer")),
     Friend("3", "Riley", true, "Union Fields", listOf("Volleyball"))
 )
-
