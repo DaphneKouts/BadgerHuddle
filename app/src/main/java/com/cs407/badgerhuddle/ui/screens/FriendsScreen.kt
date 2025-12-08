@@ -35,13 +35,9 @@ fun FriendsScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
                     friends = friendsList
 
                     friendsList.forEach { fUid ->
-                        if (fUid == "xnLqKMkYg9QdRJu8doLY4i9f1Qf1") {
-                            val friendDoc = db.collection("Profiles").document(fUid).get().await()
-                            val name = friendDoc.getString("name") ?: "Unknown"
-                            friendNames[fUid] = name
-                        } else {
-                            friendNames[fUid] = fUid
-                        }
+                        val friendDoc = db.collection("Profiles").document(fUid).get().await()
+                        val name = friendDoc.getString("name") ?: "Unknown"
+                        friendNames[fUid] = name
                     }
                 } catch (e: Exception) {
                     println("Error fetching friends: ${e.message}")

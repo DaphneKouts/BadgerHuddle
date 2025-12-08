@@ -1,5 +1,3 @@
-package com.cs407.badgerhuddle.ui.screens
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -32,6 +30,8 @@ fun GamesScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
     val uid = user?.uid ?: ""
 
     var games by remember { mutableStateOf(listOf<CourtGame>()) }
+    var friends by remember { mutableStateOf(listOf<String>()) }
+    val friendNames = remember { mutableStateMapOf<String, String>() }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
@@ -52,6 +52,24 @@ fun GamesScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
         }
     }
 
+    LaunchedEffect(uid) {
+        if (uid.isNotEmpty()) {
+            try {
+                val doc = db.collection("Profiles").document(uid).get().await()
+                val friendsList = doc.get("friends") as? List<String> ?: emptyList()
+                friends = friendsList
+
+                friendsList.forEach { fUid ->
+                    val fDoc = db.collection("Profiles").document(fUid).get().await()
+                    val name = fDoc.getString("name") ?: fUid
+                    friendNames[fUid] = name
+                }
+            } catch (e: Exception) {
+                println("Error fetching friends: ${e.message}")
+            }
+        }
+    }
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -61,6 +79,8 @@ fun GamesScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
         items(games) { game ->
 
             val userJoined = game.players.contains(uid)
+            val friendsInGame = game.players.filter { it in friends }
+            val friendsInGameNames = friendsInGame.mapNotNull { friendNames[it] }
 
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
@@ -82,7 +102,6 @@ fun GamesScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
                                 scope.launch {
 
                                     val gameRef = db.collection("Courts").document(game.id)
-
                                     val snapshot = gameRef.get().await()
                                     val curr = (snapshot.getLong("NumCheckedIn") ?: 0L).toInt()
                                     val max = (snapshot.getLong("MaxCheckIn") ?: 0L).toInt()
@@ -90,7 +109,6 @@ fun GamesScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
                                         (snapshot.get("Players") as? List<String>) ?: emptyList()
 
                                     if (!userJoined) {
-                                        // Can't join if full
                                         if (curr >= max) return@launch
 
                                         gameRef.update(
@@ -141,6 +159,14 @@ fun GamesScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                         }
+                    }
+
+                    if (friendsInGameNames.isNotEmpty()) {
+                        Text(
+                            text = "Friends checked in: ${friendsInGameNames.joinToString(", ")}",
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
                     }
                 }
             }

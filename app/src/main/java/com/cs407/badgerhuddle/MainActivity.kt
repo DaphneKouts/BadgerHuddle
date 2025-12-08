@@ -1,6 +1,7 @@
 package com.cs407.badgerhuddle
 
 import FriendsScreen
+import GamesScreen
 import HomeScreen
 import android.bluetooth.BluetoothSocket
 import android.os.Bundle
