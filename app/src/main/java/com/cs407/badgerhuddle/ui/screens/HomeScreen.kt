@@ -30,12 +30,11 @@ fun HomeScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
     val uid = auth.currentUser?.uid
 
     var games by remember { mutableStateOf(listOf<HomeGame>()) }
-    var friends by remember { mutableStateOf(listOf<String>()) }
+    var friendNames by remember { mutableStateOf(listOf<String>()) }
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    // Load games
     LaunchedEffect(Unit) {
         db.collection("Courts").addSnapshotListener { snapshot, _ ->
             if (snapshot != null) {
@@ -54,19 +53,30 @@ fun HomeScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
         }
     }
 
-    // Load friends
     LaunchedEffect(uid) {
         if (uid != null) {
             scope.launch {
                 try {
                     val doc = db.collection("Profiles").document(uid).get().await()
-                    friends = doc.get("friends") as? List<String> ?: emptyList()
+                    val friendUIDs = doc.get("friends") as? List<String> ?: emptyList()
+
+                    val names = mutableListOf<String>()
+
+                    for (friendUid in friendUIDs) {
+                        val friendDoc = db.collection("Profiles").document(friendUid).get().await()
+                        val friendName = friendDoc.getString("name") ?: "(No Name)"
+                        names.add(friendName)
+                    }
+
+                    friendNames = names
+
                 } catch (e: Exception) {
                     println("Error fetching friends: ${e.message}")
                 }
             }
         }
     }
+
 
     LazyColumn(
         modifier = modifier
@@ -90,13 +100,13 @@ fun HomeScreen(onNavigate: (String) -> Unit, modifier: Modifier = Modifier) {
                 Column(Modifier.padding(16.dp)) {
                     Text("Recently Added Friends", color = RedUW, style = MaterialTheme.typography.titleMedium)
 
-                    if (friends.isEmpty()) {
+                    if (friendNames.isEmpty()) {
                         Text(
                             "Add friends and they will pop up here",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     } else {
-                        friends.forEach { friend ->
+                        friendNames.forEach { friend ->
                             Text(
                                 friend,
                                 style = MaterialTheme.typography.bodyMedium

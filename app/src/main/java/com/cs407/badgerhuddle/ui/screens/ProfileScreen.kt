@@ -165,7 +165,7 @@ fun ProfileEditor(
 
         Button(
             onClick = {
-                viewModel.addFakeFriend()
+                //viewModel.addFakeFriend()
                 onNavigate("share") },
             colors = ButtonDefaults.buttonColors(containerColor = RedUW),
             modifier = Modifier.fillMaxWidth()
