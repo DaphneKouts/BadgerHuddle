@@ -174,4 +174,23 @@ class ViewModelAccount : ViewModel() {
             .document(uid)
             .update("friends", FieldValue.arrayUnion(newFriend))
     }
+
+    fun addFriend(uidToAdd: String) {
+        val uid = auth.currentUser?.uid ?: return
+
+        FirebaseFirestore.getInstance()
+            .collection("Profiles")
+            .document(uid)
+            .update("friends", FieldValue.arrayUnion(uidToAdd))
+    }
+
+    suspend fun getProfileName(uid: String): String {
+        return try {
+            val snap = db.collection("Profiles").document(uid).get().await()
+            snap.getString("name") ?: uid
+        } catch (_: Exception) {
+            uid
+        }
+    }
+
 }
