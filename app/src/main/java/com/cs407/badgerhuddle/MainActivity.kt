@@ -2,7 +2,12 @@ package com.cs407.badgerhuddle
 
 import FriendsScreen
 import HomeScreen
+import android.bluetooth.BluetoothSocket
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.Message
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -16,18 +21,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.cs407.badgerhuddle.ui.screens.CreateGameScreen
-import com.cs407.badgerhuddle.ui.screens.GamesScreen
-import com.cs407.badgerhuddle.ui.screens.ProfileScreen
-import com.cs407.badgerhuddle.ui.screens.ShareProfileScreen
+import com.cs407.badgerhuddle.ui.screens.*
 import com.cs407.badgerhuddle.ui.theme.BadgerHuddleTheme
 import com.cs407.badgerhuddle.ui.theme.RedUW
 import com.cs407.badgerhuddle.ui.viewModels.ViewModelAccount
 import com.google.firebase.Firebase
 import com.google.firebase.initialize
 
-class MainActivity : ComponentActivity() {
+class MainActivity(
+    private val preConnectedSocket: BluetoothSocket? = null
+) : ComponentActivity() {
+
+    lateinit var bluetoothService: MyBluetoothService
+
+    companion object {
+        val incomingUidState = mutableStateOf("")
+        var latestViewModel: ViewModelAccount? = null
+    }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,11 +47,37 @@ class MainActivity : ComponentActivity() {
 
         Firebase.initialize(this)
 
+        val context = this
+
+        val handler = object : Handler(Looper.getMainLooper()) {
+            override fun handleMessage(msg: Message) {
+                when (msg.what) {
+                    MESSAGE_READ -> {
+                        val bytes = msg.obj as ByteArray
+                        val receivedUid = String(bytes)
+                        incomingUidState.value = receivedUid
+
+                        val accountVM = latestViewModel ?: return
+                        accountVM.addFriend(receivedUid)
+
+                        Toast.makeText(context, "Friend added: $receivedUid", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
+        bluetoothService = MyBluetoothService(handler)
+
+        preConnectedSocket?.let { socket ->
+            bluetoothService.setSocket(socket)
+        }
+
         setContent {
             BadgerHuddleTheme {
                 var currentScreen by remember { mutableStateOf("home") }
 
                 val accountViewModel: ViewModelAccount = viewModel()
+                latestViewModel = accountViewModel
 
                 Scaffold(
                     topBar = {
@@ -61,26 +99,19 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     when (currentScreen) {
                         "home" -> HomeScreen({ currentScreen = it }, Modifier.padding(innerPadding))
-                        "games" -> GamesScreen(
-                            { currentScreen = it },
-                            Modifier.padding(innerPadding)
-                        )
-                        "create" -> CreateGameScreen(
-                            { currentScreen = it },
-                            Modifier.padding(innerPadding)
-                        )
+                        "games" -> GamesScreen({ currentScreen = it }, Modifier.padding(innerPadding))
+                        "create" -> CreateGameScreen({ currentScreen = it }, Modifier.padding(innerPadding))
                         "profile" -> ProfileScreen(
                             { currentScreen = it },
                             Modifier.padding(innerPadding),
                             viewModel = accountViewModel
                         )
-                        "friends" -> FriendsScreen(
-                            { currentScreen = it },
-                            Modifier.padding(innerPadding)
-                        )
+                        "friends" -> FriendsScreen({ currentScreen = it }, Modifier.padding(innerPadding))
                         "share" -> ShareProfileScreen(
-                            { currentScreen = it },
-                            Modifier.padding(innerPadding)
+                            onNavigate = { currentScreen = it },
+                            modifier = Modifier.padding(innerPadding),
+                            accountVM = accountViewModel,
+                            bluetoothService = bluetoothService
                         )
                     }
                 }
